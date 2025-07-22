@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Models Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #f8fafc; }
+        .section-card { margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-radius: 1rem; }
+        .section-title { font-weight: 600; color: #2c3e50; }
+        .result-area { margin-top: 1rem; }
+        .chart-container { position: relative; height: 300px; }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <h1 class="mb-4 text-center">Financial Models Dashboard</h1>
+
+    <!-- Section 1: Expense Prediction -->
+    <div class="card section-card">
+        <div class="card-body">
+            <h3 class="section-title">1. Expense Prediction</h3>
+            <form id="expense-form">
+                <div class="row g-2">
+                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Net monthly income" type="number" placeholder="Net monthly income" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Debt" type="number" placeholder="Debt" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
+                </div>
+                <button class="btn btn-primary mt-3" type="submit">Predict Expense</button>
+            </form>
+            <div id="expense-result" class="result-area"></div>
+        </div>
+    </div>
+
+    <!-- Section 2: Investment Recommendation -->
+    <div class="card section-card">
+        <div class="card-body">
+            <h3 class="section-title">2. Investment Recommendation</h3>
+            <form id="investment-form">
+                <div class="row g-2">
+                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Net monthly income" type="number" placeholder="Net monthly income" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Debt" type="number" placeholder="Debt" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Total Expenses" type="number" placeholder="Total Expenses" required></div>
+                </div>
+                <button class="btn btn-success mt-3" type="submit">Get Recommendation</button>
+            </form>
+            <div id="investment-result" class="result-area"></div>
+        </div>
+    </div>
+
+    <!-- Section 3: Insurance Gap Detection -->
+    <div class="card section-card">
+        <div class="card-body">
+            <h3 class="section-title">3. Insurance Gap Detection</h3>
+            <form id="insurance-form">
+                <div class="row g-2">
+                    <div class="col-md-4"><input class="form-control" name="Age" type="number" placeholder="Age" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Net monthly income" type="number" placeholder="Net monthly income" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Debt" type="number" placeholder="Debt" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Insurance" type="number" placeholder="Insurance (Current Coverage)" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Occupation" type="text" placeholder="Occupation (optional)"></div>
+                    <div class="col-md-4"><input class="form-control" name="Lifestyle Score" type="number" min="1" max="10" placeholder="Lifestyle Score (1-10, optional)"></div>
+                    <div class="col-md-4">
+                        <select class="form-control" name="Family History">
+                            <option value="">Family History (optional)</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-warning mt-3" type="submit">Detect Gap</button>
+            </form>
+            <div id="insurance-result" class="result-area"></div>
+        </div>
+    </div>
+
+    <!-- Section 4: Financial Projection Chart -->
+    <div class="card section-card">
+        <div class="card-body">
+            <h3 class="section-title">4. Financial Projection</h3>
+            <form id="projection-form">
+                <div class="row g-2">
+                    <div class="col-md-4"><input class="form-control" name="Age" type="number" placeholder="Age" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Total Expenses" type="number" placeholder="Total Expenses" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
+                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
+                </div>
+                <button class="btn btn-info mt-3" type="submit">Show Projection</button>
+            </form>
+            <div id="projection-result" class="result-area"></div>
+            <div class="chart-container mt-4">
+                <canvas id="projection-chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Helper to serialize form data to a feature array
+function formToFeatureArray(form, fields) {
+    const data = new FormData(form);
+    return [fields.map(f => Number(data.get(f)))];
+}
+
+// Expense Prediction
+const expenseFields = ["Gross monthly income","Net monthly income","Savings","Investments","Debt","Emergency Fund"];
+document.getElementById('expense-form').onsubmit = async function(e) {
+    e.preventDefault();
+    const features = formToFeatureArray(this, expenseFields);
+    const res = await fetch('/predict/expense', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features})
+    });
+    const data = await res.json();
+    if(res.ok) {
+        let html = `<div class='alert alert-primary'><b>Predicted Expense: ${data.prediction[0]}</b></div>`;
+        if(data.advice && data.advice.length) {
+            html += `<ul class='list-group mb-2'>`;
+            for(const line of data.advice) html += `<li class='list-group-item'>${line}</li>`;
+            html += `</ul>`;
+        }
+        document.getElementById('expense-result').innerHTML = html;
+    } else {
+        document.getElementById('expense-result').innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
+    }
+};
+
+// Investment Recommendation
+const investmentFields = ["Gross monthly income","Net monthly income","Savings","Investments","Debt","Emergency Fund","Total Expenses"];
+document.getElementById('investment-form').onsubmit = async function(e) {
+    e.preventDefault();
+    const features = formToFeatureArray(this, investmentFields);
+    const res = await fetch('/predict/investment', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features})
+    });
+    const data = await res.json();
+    if(res.ok) {
+        let html = `<div class='alert alert-success'><b>Investment Recommendation: ${data.prediction[0]}</b></div>`;
+        if(data.advice && data.advice.length) {
+            html += `<ul class='list-group mb-2'>`;
+            for(const line of data.advice) html += `<li class='list-group-item'>${line}</li>`;
+            html += `</ul>`;
+        }
+        document.getElementById('investment-result').innerHTML = html;
+    } else {
+        document.getElementById('investment-result').innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
+    }
+};
+
+// Insurance Gap Detection
+const insuranceFields = ["Age","Gross monthly income","Net monthly income","Savings","Debt","Emergency Fund","Investments","Insurance","Occupation","Lifestyle Score","Family History"];
+document.getElementById('insurance-form').onsubmit = async function(e) {
+    e.preventDefault();
+    const data = new FormData(this);
+    // Build features array in the order of insuranceFields
+    const features = [insuranceFields.map(f => {
+        let v = data.get(f);
+        if(f === "Occupation" || f === "Family History") return v || "";
+        if(f === "Lifestyle Score") return v ? Number(v) : 5;
+        return v ? Number(v) : 0;
+    })];
+    const res = await fetch('/predict/insurance', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features})
+    });
+    const result = await res.json();
+    if(res.ok) {
+        let html = `<div class='alert alert-warning'><b>Insurance Gap: ${result.prediction[0]}</b></div>`;
+        if(result.advice && result.advice.length) {
+            html += `<ul class='list-group mb-2'>`;
+            for(const line of result.advice) html += `<li class='list-group-item'>${line}</li>`;
+            html += `</ul>`;
+        }
+        document.getElementById('insurance-result').innerHTML = html;
+    } else {
+        document.getElementById('insurance-result').innerHTML = `<div class='alert alert-danger'>${result.error}</div>`;
+    }
+};
+
+// Financial Projection
+const projectionFields = ["Age","Gross monthly income","Total Expenses","Savings","Investments","Emergency Fund"];
+document.getElementById('projection-form').onsubmit = async function(e) {
+    e.preventDefault();
+    const features = formToFeatureArray(this, projectionFields);
+    const res = await fetch('/predict/projection', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features})
+    });
+    const data = await res.json();
+    if(res.ok) {
+        // Table
+        let table = `<table class='table table-bordered'><thead><tr>`;
+        for(const col of Object.keys(data.table[0])) table += `<th>${col}</th>`;
+        table += `</tr></thead><tbody>`;
+        for(const row of data.table) {
+            table += `<tr>`;
+            for(const col of Object.keys(row)) table += `<td>${row[col]}</td>`;
+            table += `</tr>`;
+        }
+        table += `</tbody></table>`;
+        document.getElementById('projection-result').innerHTML = table;
+        // Chart
+        const ctx = document.getElementById('projection-chart').getContext('2d');
+        if(window.projectionChart) window.projectionChart.destroy();
+        window.projectionChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.table.map(r => r['Year']),
+                datasets: [
+                    {label: 'Projected Income', data: data.table.map(r => r['Projected Income (₹)']), borderColor: '#007bff', fill: false},
+                    {label: 'Projected Expenses', data: data.table.map(r => r['Projected Expenses (₹)']), borderColor: '#dc3545', fill: false},
+                    {label: 'Net Worth', data: data.table.map(r => r['Net Worth (₹)']), borderColor: '#28a745', fill: false}
+                ]
+            },
+            options: {responsive: true, plugins: {legend: {position: 'top'}}}
+        });
+    } else {
+        document.getElementById('projection-result').innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
+        if(window.projectionChart) window.projectionChart.destroy();
+    }
+};
+</script>
+</body>
+</html>
