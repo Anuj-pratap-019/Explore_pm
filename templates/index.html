@@ -3,240 +3,1271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Models Dashboard</title>
+    <title>Explore PM | AI Backed Portfolio Manager</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #f8fafc; }
-        .section-card { margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-radius: 1rem; }
-        .section-title { font-weight: 600; color: #2c3e50; }
-        .result-area { margin-top: 1rem; }
-        .chart-container { position: relative; height: 300px; }
+        :root {
+            --bg-color: #080b13;
+            --bg-gradient: radial-gradient(circle at 50% 0%, #151e36 0%, #080b13 70%);
+            --card-bg: rgba(18, 25, 41, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            
+            --gradient-blue: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            --gradient-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-yellow: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: var(--bg-gradient);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            padding-top: 3.5rem; /* Account for fixed ticker marquee */
+            padding-bottom: 3rem;
+            letter-spacing: -0.01em;
+        }
+
+        /* Scrolling Ticker Marquee */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(13, 21, 39, 0.9);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0.5rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1050;
+        }
+        
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+            animation: scroll 35s linear infinite;
+        }
+
+        .ticker-item {
+            display: inline-block;
+            padding: 0 2rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .ticker-bullet {
+            margin-right: 0.35rem;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Header branding */
+        .app-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .app-title {
+            font-weight: 800;
+            background: linear-gradient(to right, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.25rem;
+        }
+
+        .app-tagline {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Nav Pills (Tabs styling) */
+        .custom-pills {
+            background: rgba(13, 21, 39, 0.5);
+            padding: 0.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--card-border);
+            margin-bottom: 2.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .custom-pills .nav-link {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .custom-pills .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-pills .nav-link.active {
+            background: var(--gradient-blue);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
+        }
+
+        /* Glassmorphism Cards */
+        .section-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 1.25rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .section-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* KPI health metrics cards */
+        .kpi-card {
+            background: rgba(13, 21, 39, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            transition: transform 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .kpi-title {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Budget rule splitter styling */
+        .budget-bar-wrap {
+            margin-bottom: 1.25rem;
+        }
+
+        .budget-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #cbd5e1; /* Increased contrast for budget labels */
+        }
+
+        .budget-label span:first-child {
+            color: #f1f5f9; /* High-contrast white for labels */
+        }
+
+        .budget-label span:last-child {
+            color: #f8fafc;
+            font-weight: 700;
+        }
+
+        .progress-custom {
+            height: 0.65rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-custom-bar {
+            height: 100%;
+            border-radius: 1rem;
+            transition: width 0.4s ease;
+        }
+
+        /* Inputs */
+        .form-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-control, .form-select {
+            background-color: rgba(8, 12, 21, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-radius: 0.75rem;
+            padding: 0.65rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: rgba(8, 12, 21, 0.85);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: #475569;
+        }
+
+        /* Buttons */
+        .btn-grad {
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-grad:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-blue { background: var(--gradient-blue); color: #fff; }
+        .btn-green { background: var(--gradient-green); color: #fff; }
+        .btn-yellow { background: var(--gradient-yellow); color: #fff; }
+        .btn-cyan { background: var(--gradient-cyan); color: #fff; }
+
+        .validation-warning {
+            font-size: 0.75rem;
+            color: var(--accent-red);
+            font-weight: 500;
+            margin-top: 0.25rem;
+            display: none;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Result Areas */
+        .result-area {
+            margin-top: 1.5rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            display: none;
+        }
+
+        .result-header {
+            padding: 1rem 1.25rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-body {
+            background-color: rgba(8, 12, 21, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.25rem;
+        }
+
+        .advice-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+
+        .advice-item {
+            padding: 0.65rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.925rem;
+            color: #cbd5e1;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .advice-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        /* Tables & Charts */
+        .table-responsive {
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+
+        .table {
+            color: var(--text-primary);
+            background-color: rgba(8, 12, 21, 0.3) !important;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+
+        .table th {
+            background-color: rgba(13, 21, 39, 0.9) !important;
+            color: var(--text-secondary) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem;
+        }
+
+        .table td {
+            background-color: transparent !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            color: #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 380px;
+            background-color: rgba(8, 12, 21, 0.3);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--card-border);
+        }
+        
+        .app-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+            margin-top: 3.5rem;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .app-footer p {
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
-<div class="container py-4">
-    <h1 class="mb-4 text-center">Financial Models Dashboard</h1>
 
-    <!-- Section 1: Expense Prediction -->
-    <div class="card section-card">
-        <div class="card-body">
-            <h3 class="section-title">1. Expense Prediction</h3>
-            <form id="expense-form">
-                <div class="row g-2">
-                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Net monthly income" type="number" placeholder="Net monthly income" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Debt" type="number" placeholder="Debt" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
-                </div>
-                <button class="btn btn-primary mt-3" type="submit">Predict Expense</button>
-            </form>
-            <div id="expense-result" class="result-area"></div>
-        </div>
-    </div>
-
-    <!-- Section 2: Investment Recommendation -->
-    <div class="card section-card">
-        <div class="card-body">
-            <h3 class="section-title">2. Investment Recommendation</h3>
-            <form id="investment-form">
-                <div class="row g-2">
-                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Net monthly income" type="number" placeholder="Net monthly income" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Debt" type="number" placeholder="Debt" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Total Expenses" type="number" placeholder="Total Expenses" required></div>
-                </div>
-                <button class="btn btn-success mt-3" type="submit">Get Recommendation</button>
-            </form>
-            <div id="investment-result" class="result-area"></div>
-        </div>
-    </div>
-
-    <!-- Section 3: Insurance Gap Detection -->
-    <div class="card section-card">
-        <div class="card-body">
-            <h3 class="section-title">3. Insurance Gap Detection</h3>
-            <form id="insurance-form">
-                <div class="row g-2">
-                    <div class="col-md-4"><input class="form-control" name="Age" type="number" placeholder="Age" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Net monthly income" type="number" placeholder="Net monthly income" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Debt" type="number" placeholder="Debt" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Insurance" type="number" placeholder="Insurance (Current Coverage)" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Occupation" type="text" placeholder="Occupation (optional)"></div>
-                    <div class="col-md-4"><input class="form-control" name="Lifestyle Score" type="number" min="1" max="10" placeholder="Lifestyle Score (1-10, optional)"></div>
-                    <div class="col-md-4">
-                        <select class="form-control" name="Family History">
-                            <option value="">Family History (optional)</option>
-                            <option value="Yes">Yes</option>
-                            <option value="No">No</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="btn btn-warning mt-3" type="submit">Detect Gap</button>
-            </form>
-            <div id="insurance-result" class="result-area"></div>
-        </div>
-    </div>
-
-    <!-- Section 4: Financial Projection Chart -->
-    <div class="card section-card">
-        <div class="card-body">
-            <h3 class="section-title">4. Financial Projection</h3>
-            <form id="projection-form">
-                <div class="row g-2">
-                    <div class="col-md-4"><input class="form-control" name="Age" type="number" placeholder="Age" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Gross monthly income" type="number" placeholder="Gross monthly income" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Total Expenses" type="number" placeholder="Total Expenses" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Savings" type="number" placeholder="Savings" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Investments" type="number" placeholder="Investments" required></div>
-                    <div class="col-md-4"><input class="form-control" name="Emergency Fund" type="number" placeholder="Emergency Fund" required></div>
-                </div>
-                <button class="btn btn-info mt-3" type="submit">Show Projection</button>
-            </form>
-            <div id="projection-result" class="result-area"></div>
-            <div class="chart-container mt-4">
-                <canvas id="projection-chart"></canvas>
-            </div>
-        </div>
+<!-- Scrolling Rates Ticker -->
+<div class="ticker-wrap">
+    <div class="ticker">
+        <span class="ticker-item"><span class="ticker-bullet text-success">▲</span> NIFTY 50: 22,450.15 (+0.84%)</span>
+        <span class="ticker-item"><span class="ticker-bullet text-success">▲</span> SENSEX: 73,878.10 (+0.78%)</span>
+        <span class="ticker-item"><span class="ticker-bullet text-warning">●</span> Avg FD Rate: 7.10%</span>
+        <span class="ticker-item"><span class="ticker-bullet text-cyan">●</span> PPF Rate: 7.10%</span>
+        <span class="ticker-item"><span class="ticker-bullet text-danger">▼</span> Retail Inflation (CPI): 4.85% (-0.12%)</span>
+        <span class="ticker-item"><span class="ticker-bullet text-success">▲</span> Gold (24k/10g): ₹72,400 (+1.2%)</span>
+        <!-- Duplicated items for infinite marquee loop -->
+        <span class="ticker-item"><span class="ticker-bullet text-success">▲</span> NIFTY 50: 22,450.15 (+0.84%)</span>
+        <span class="ticker-item"><span class="ticker-bullet text-success">▲</span> SENSEX: 73,878.10 (+0.78%)</span>
+        <span class="ticker-item"><span class="ticker-bullet text-warning">●</span> Avg FD Rate: 7.10%</span>
+        <span class="ticker-item"><span class="ticker-bullet text-cyan">●</span> PPF Rate: 7.10%</span>
+        <span class="ticker-item"><span class="ticker-bullet text-danger">▼</span> Retail Inflation (CPI): 4.85% (-0.12%)</span>
+        <span class="ticker-item"><span class="ticker-bullet text-success">▲</span> Gold (24k/10g): ₹72,400 (+1.2%)</span>
     </div>
 </div>
 
+<div class="container">
+    <!-- Header -->
+    <div class="app-header text-center">
+        <h1 class="app-title">Explore PM</h1>
+        <p class="app-tagline">AI-Backed Portfolio Manager — Insurance For All</p>
+    </div>
+
+    <!-- Navigation Pills (Tab triggers) -->
+    <ul class="nav nav-pills custom-pills justify-content-center" id="dashboard-tabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-pane" type="button" role="tab">
+                📊 Dashboard Overview
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="expense-tab" data-bs-toggle="tab" data-bs-target="#expense-pane" type="button" role="tab">
+                💸 Expense Predictor
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="invest-tab" data-bs-toggle="tab" data-bs-target="#invest-pane" type="button" role="tab">
+                📈 Smart Investment
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="insurance-tab" data-bs-toggle="tab" data-bs-target="#insurance-pane" type="button" role="tab">
+                🛡️ Insurance & Health
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="projection-tab" data-bs-toggle="tab" data-bs-target="#projection-pane" type="button" role="tab">
+                🔮 Janam Patri Projection
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="dashboard-tab-content">
+        
+        <!-- Tab 1: Dashboard Home Overview -->
+        <div class="tab-pane fade show active" id="home-pane" role="tabpanel">
+            <div class="row">
+                <!-- Left panel: quick profile form -->
+                <div class="col-lg-5 mb-4">
+                    <div class="card section-card h-100">
+                        <div class="card-body">
+                            <h3 class="section-title">👤 Quick Financial Profile</h3>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Gross Monthly Income (₹)</label>
+                                    <input class="form-control profile-calc-input" id="profile-gross" type="number" placeholder="Gross monthly income">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Net Monthly Income (₹)</label>
+                                    <input class="form-control profile-calc-input" id="profile-net" type="number" placeholder="Net monthly income">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Liquid Savings (₹)</label>
+                                    <input class="form-control profile-calc-input" id="profile-savings" type="number" placeholder="Cash savings">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Emergency Fund (₹)</label>
+                                    <input class="form-control profile-calc-input" id="profile-emergency" type="number" placeholder="Emergency cushion">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Total Debt (₹)</label>
+                                    <input class="form-control profile-calc-input" id="profile-debt" type="number" placeholder="Outstanding loans">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Monthly Expenses (₹)</label>
+                                    <input class="form-control profile-calc-input" id="profile-expenses" type="number" placeholder="Current expenses">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right panel: health metrics & charts -->
+                <div class="col-lg-7">
+                    <!-- Metrics row (4 Columns for Net Worth card display) -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="kpi-card">
+                                <div class="kpi-title">Savings Rate</div>
+                                <div class="kpi-value" id="kpi-savings-rate">0.0%</div>
+                                <div class="kpi-status" id="kpi-savings-status"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="kpi-card">
+                                <div class="kpi-title">Debt to Income</div>
+                                <div class="kpi-value" id="kpi-dti">3.1%</div>
+                                <div class="kpi-status" id="kpi-dti-status"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="kpi-card">
+                                <div class="kpi-title">Emergency Runway</div>
+                                <div class="kpi-value" id="kpi-runway">7.1 mo</div>
+                                <div class="kpi-status" id="kpi-runway-status"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="kpi-card">
+                                <div class="kpi-title">Total Net Worth</div>
+                                <div class="kpi-value" id="kpi-networth">₹0</div>
+                                <div class="kpi-status" id="kpi-networth-status"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Budget splitter card -->
+                    <div class="card section-card mb-4">
+                        <div class="card-body">
+                            <h3 class="section-title">📊 50/30/20 Budget Allocator</h3>
+                            <p class="text-secondary small mb-4">Splits your net monthly income into standard target ratios compared against your current actual spending.</p>
+                            
+                            <div class="budget-bar-wrap">
+                                <div class="budget-label">
+                                    <span>Needs (50%): Essential Expenses</span>
+                                    <span id="budget-needs-val">₹0</span>
+                                </div>
+                                <div class="progress-custom">
+                                    <div class="progress-custom-bar bg-primary" id="budget-needs-bar"></div>
+                                </div>
+                            </div>
+
+                            <div class="budget-bar-wrap">
+                                <div class="budget-label">
+                                    <span>Wants (30%): Lifestyle & Leisure</span>
+                                    <span id="budget-wants-val">₹0</span>
+                                </div>
+                                <div class="progress-custom">
+                                    <div class="progress-custom-bar bg-warning" id="budget-wants-bar"></div>
+                                </div>
+                            </div>
+
+                            <div class="budget-bar-wrap">
+                                <div class="budget-label">
+                                    <span>Savings (20%): Wealth & Goals</span>
+                                    <span id="budget-savings-val">₹0</span>
+                                </div>
+                                <div class="progress-custom">
+                                    <div class="progress-custom-bar bg-success" id="budget-savings-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Expense Predictor Form -->
+        <div class="tab-pane fade" id="expense-pane" role="tabpanel">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card section-card">
+                        <div class="card-body">
+                            <h3 class="section-title">
+                                <svg width="20" height="20" fill="currentColor" class="bi bi-wallet2 text-primary" viewBox="0 0 16 16">
+                                    <path d="M12.136.326A1.5 1.5 0 0 1 14 1.78V3h.5A1.5 1.5 0 0 1 16 4.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 13.5v-9a1.5 1.5 0 0 1 1.43-1.493L10.864.072a1.5 1.5 0 0 1 1.272.254zM3 3h7.586L8 1.414 3 3.013zm11.5 1h-13a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z"/>
+                                </svg>
+                                Predict Expected Expenses
+                            </h3>
+                            <form id="expense-form" class="needs-validation" novalidate>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Gross monthly income (₹)</label>
+                                        <input class="form-control exp-inp" name="Gross monthly income" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Net monthly income (₹)</label>
+                                        <input class="form-control exp-inp" name="Net monthly income" type="number" required>
+                                        <div class="validation-warning" id="expense-income-warning">
+                                            ⚠️ Net income should not exceed Gross income.
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Emergency Fund (₹)</label>
+                                        <input class="form-control exp-inp" name="Emergency Fund" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Liquid Savings (₹)</label>
+                                        <input class="form-control exp-inp" name="Savings" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Investments (₹)</label>
+                                        <input class="form-control exp-inp" name="Investments" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Total Debt (₹)</label>
+                                        <input class="form-control exp-inp" name="Debt" type="number" required>
+                                    </div>
+                                </div>
+                                <button class="btn btn-grad btn-blue mt-4 w-100" type="submit">Predict Expenses</button>
+                            </form>
+                            <div id="expense-result" class="result-area"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Investment Advisory & Goal Simulator -->
+        <div class="tab-pane fade" id="invest-pane" role="tabpanel">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card section-card">
+                        <div class="card-body">
+                            <h3 class="section-title">
+                                <svg width="20" height="20" fill="currentColor" class="bi bi-graph-up-arrow text-success" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M0 0h1v15h15v1H0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5"/>
+                                </svg>
+                                Smart Investment Allocation Adviser
+                            </h3>
+                            <form id="investment-form" class="needs-validation" novalidate>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Gross monthly income (₹)</label>
+                                        <input class="form-control inv-inp" name="Gross monthly income" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Net monthly income (₹)</label>
+                                        <input class="form-control inv-inp" name="Net monthly income" type="number" required>
+                                        <div class="validation-warning" id="invest-income-warning">
+                                            ⚠️ Net income should not exceed Gross income.
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Emergency Fund (₹)</label>
+                                        <input class="form-control inv-inp" name="Emergency Fund" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Liquid Savings (₹)</label>
+                                        <input class="form-control inv-inp" name="Savings" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Investments (₹)</label>
+                                        <input class="form-control inv-inp" name="Investments" type="number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Total Debt (₹)</label>
+                                        <input class="form-control inv-inp" name="Debt" type="number" required>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">Total Monthly Expenses (₹)</label>
+                                        <input class="form-control inv-inp" name="Total Expenses" type="number" required>
+                                        <div class="validation-warning" id="invest-expense-warning">
+                                            ⚠️ Expenses exceed gross monthly income.
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-grad btn-green mt-4 w-100" type="submit">Analyze Recommendations</button>
+                            </form>
+                            <div id="investment-result" class="result-area"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Insurance Analytics -->
+        <div class="tab-pane fade" id="insurance-pane" role="tabpanel">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card section-card">
+                        <div class="card-body">
+                            <h3 class="section-title">
+                                <svg width="20" height="20" fill="currentColor" class="bi bi-shield-check text-warning" viewBox="0 0 16 16">
+                                    <path d="M5.338 1.59a61 61 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.244.998 0A10.7 10.7 0 0 0 13 12.024c1.527-1.998 2.807-5.03 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C10.962 1.25 9.59.837 8.006.03a.48.48 0 0 0-.412 0L5.338 1.59zM8 14.18c-.449-.1-.83-.298-1.152-.497A9.7 9.7 0 0 1 5.093 11.8c-1.398-1.83-2.518-4.57-2.03-8.374a58 58 0 0 1 2.503-.743 42 42 0 0 1 2.525-.662C8.627 2.213 9.476 2.5 10.05 2.69c.813.267 1.677.534 2.503.743.488 3.805-.632 6.544-2.03 8.374a9.7 9.7 0 0 1-1.758 1.884c-.313.197-.696.399-1.15.5H8z"/>
+                                    <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+                                </svg>
+                                Term Cover Adequacy Analyzer
+                            </h3>
+                            <form id="insurance-form" class="needs-validation" novalidate>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Age (years)</label>
+                                        <input class="form-control ins-inp" name="Age" type="number" min="1" max="100" placeholder="e.g. 35" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Current Term Cover (₹)</label>
+                                        <input class="form-control ins-inp" name="Insurance" type="number" min="0" placeholder="e.g. 15000000" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Gross monthly income (₹)</label>
+                                        <input class="form-control ins-inp" name="Gross monthly income" type="number" min="0" placeholder="e.g. 150000" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Net monthly income (₹)</label>
+                                        <input class="form-control ins-inp" name="Net monthly income" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Liquid Savings (₹)</label>
+                                        <input class="form-control ins-inp" name="Savings" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Total Debt (₹)</label>
+                                        <input class="form-control ins-inp" name="Debt" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Emergency Fund (₹)</label>
+                                        <input class="form-control ins-inp" name="Emergency Fund" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Investments (₹)</label>
+                                        <input class="form-control ins-inp" name="Investments" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Occupation</label>
+                                        <input class="form-control ins-inp" name="Occupation" type="text" placeholder="e.g. Architect">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Lifestyle Score (1-10)</label>
+                                        <input class="form-control ins-inp" name="Lifestyle Score" type="number" min="1" max="10" placeholder="10=Healthy, 1=Poor">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Family Medical History</label>
+                                        <select class="form-select ins-inp" name="Family History">
+                                            <option value="No">No major hereditary issues</option>
+                                            <option value="Yes">Yes, history of critical illness</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-grad btn-yellow mt-4 w-100" type="submit">Verify Protection Gap</button>
+                            </form>
+                            <div id="insurance-result" class="result-area"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Janam Patri Projection -->
+        <div class="tab-pane fade" id="projection-pane" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card section-card">
+                        <div class="card-body">
+                            <h3 class="section-title">
+                                <svg width="20" height="20" fill="currentColor" class="bi bi-magic text-cyan" viewBox="0 0 16 16">
+                                    <path d="M9.5 2.672a.5.5 0 1 0 1 0V.5a.5.5 0 0 0-1 0v2.172zm.5 1.791a.5.5 0 1 0 0-.707L8.464 2.227a.5.5 0 1 0-.707.707L9.293 4.464zm.001 7.071a.5.5 0 1 0 .707 0l1.53-1.53a.5.5 0 1 0-.707-.707l-1.53 1.53a.5.5 0 0 0 0 .707zM10.5 8a.5.5 0 0 0-.5-.5h-2.172a.5.5 0 0 0 0 1H10a.5.5 0 0 0 .5-.5zM5.5 2.672a.5.5 0 1 0-1 0V.5a.5.5 0 0 0 1 0v2.172zm-.5 1.791a.5.5 0 1 0 0-.707L6.536 2.227a.5.5 0 1 0 .707.707L5.707 4.464z"/>
+                                    <path d="M1.854 14.854a.5.5 0 1 1-.708-.708L12.5 2.793l.707.707L1.854 14.854zm12.354-.708a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708-.708l-1.5-1.5z"/>
+                                </svg>
+                                10-Year Wealth Projection Timeline
+                            </h3>
+                            <form id="projection-form" class="needs-validation" novalidate>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Age (years)</label>
+                                        <input class="form-control proj-inp" name="Age" type="number" min="1" max="100" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Net monthly income (₹)</label>
+                                        <input class="form-control proj-inp" name="Net monthly income" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Total monthly expenses (₹)</label>
+                                        <input class="form-control proj-inp" name="Total Expenses" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Emergency Fund (₹)</label>
+                                        <input class="form-control proj-inp" name="Emergency Fund" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Liquid Savings (₹)</label>
+                                        <input class="form-control proj-inp" name="Savings" type="number" min="0" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Investments (₹)</label>
+                                        <input class="form-control proj-inp" name="Investments" type="number" min="0" required>
+                                    </div>
+                                </div>
+                                <button class="btn btn-grad btn-cyan mt-4 w-100" type="submit">Generate Projection</button>
+                            </form>
+                            <div id="projection-result" class="result-area"></div>
+                            <div class="chart-container mt-4" style="display: none;" id="chart-wrap">
+                                <canvas id="projection-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Footer -->
+    <footer class="app-footer text-center mt-5">
+        <p class="mb-1 text-muted" style="font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em;">
+            Explore PM — AI-Backed Portfolio Manager & Insurance Advisor
+        </p>
+        <p class="text-muted" style="font-size: 0.8rem; opacity: 0.7;">
+            &copy; 2026 Explore PM. All rights reserved.
+        </p>
+    </footer>
+</div>
+
+<!-- Bootstrap & App JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Helper to serialize form data to a feature array
-function formToFeatureArray(form, fields) {
-    const data = new FormData(form);
-    return [fields.map(f => Number(data.get(f)))];
+// Real-time overview profile calculations
+const profileInputs = document.querySelectorAll('.profile-calc-input');
+function updateOverviewMetrics() {
+    const grossVal = document.getElementById('profile-gross').value;
+    const netVal = document.getElementById('profile-net').value;
+    const savingsVal = document.getElementById('profile-savings').value;
+    const emergencyVal = document.getElementById('profile-emergency').value;
+    const debtVal = document.getElementById('profile-debt').value;
+    const expensesVal = document.getElementById('profile-expenses').value;
+
+    const gross = parseFloat(grossVal) || 0;
+    const net = parseFloat(netVal) || 0;
+    const savings = parseFloat(savingsVal) || 0;
+    const emergency = parseFloat(emergencyVal) || 0;
+    const debt = parseFloat(debtVal) || 0;
+    const expenses = parseFloat(expensesVal) || 0;
+
+    // 1. Savings Rate Calculation: ((Net - Expenses) / Net) * 100
+    const savingsRate = net > 0 ? ((net - expenses) / net) * 100 : 0;
+    const srEl = document.getElementById('kpi-savings-rate');
+    const srStatusEl = document.getElementById('kpi-savings-status');
+    if (netVal === '') {
+        srEl.innerText = '--';
+        srEl.style.color = 'var(--text-secondary)';
+        srStatusEl.innerHTML = '<span class="text-secondary">Dashed</span>';
+    } else {
+        srEl.innerText = savingsRate.toFixed(1) + '%';
+        if (savingsRate > 25) {
+            srEl.style.color = 'var(--accent-green)';
+            srStatusEl.innerHTML = '<span class="text-success">🟢 Excellent</span>';
+        } else if (savingsRate >= 10) {
+            srEl.style.color = 'var(--accent-yellow)';
+            srStatusEl.innerHTML = '<span class="text-warning">🟡 Healthy</span>';
+        } else {
+            srEl.style.color = 'var(--accent-red)';
+            srStatusEl.innerHTML = '<span class="text-danger">🔴 Low Savings</span>';
+        }
+    }
+
+    // 2. Debt to Income Ratio (Annual)
+    const annualGross = gross * 12;
+    const dti = annualGross > 0 ? (debt / annualGross) * 100 : 0;
+    const dtiEl = document.getElementById('kpi-dti');
+    const dtiStatusEl = document.getElementById('kpi-dti-status');
+    if (grossVal === '') {
+        dtiEl.innerText = '--';
+        dtiEl.style.color = 'var(--text-secondary)';
+        dtiStatusEl.innerHTML = '<span class="text-secondary">Dashed</span>';
+    } else {
+        dtiEl.innerText = dti.toFixed(1) + '%';
+        if (dti <= 30) {
+            dtiEl.style.color = 'var(--accent-green)';
+            dtiStatusEl.innerHTML = '<span class="text-success">🟢 Safe Leverage</span>';
+        } else if (dti <= 50) {
+            dtiEl.style.color = 'var(--accent-yellow)';
+            dtiStatusEl.innerHTML = '<span class="text-warning">🟡 Moderate Leverage</span>';
+        } else {
+            dtiEl.style.color = 'var(--accent-red)';
+            dtiStatusEl.innerHTML = '<span class="text-danger">🚨 High Leverage</span>';
+        }
+    }
+
+    // 3. Emergency Fund Runway
+    const runway = expenses > 0 ? emergency / expenses : 0;
+    const runwayEl = document.getElementById('kpi-runway');
+    const runwayStatusEl = document.getElementById('kpi-runway-status');
+    if (expensesVal === '') {
+        runwayEl.innerText = '--';
+        runwayEl.style.color = 'var(--text-secondary)';
+        runwayStatusEl.innerHTML = '<span class="text-secondary">Dashed</span>';
+    } else {
+        runwayEl.innerText = runway.toFixed(1) + ' mo';
+        if (runway >= 6) {
+            runwayEl.style.color = 'var(--accent-green)';
+            runwayStatusEl.innerHTML = '<span class="text-success">🟢 Fully Secure</span>';
+        } else if (runway >= 3) {
+            runwayEl.style.color = 'var(--accent-yellow)';
+            runwayStatusEl.innerHTML = '<span class="text-warning">🟡 Adequate</span>';
+        } else {
+            runwayEl.style.color = 'var(--accent-red)';
+            runwayStatusEl.innerHTML = '<span class="text-danger">🚨 Vulnerable</span>';
+        }
+    }
+
+    // 4. Total Net Worth Dynamic Calculation
+    const investments = parseFloat(document.querySelector('[name="Investments"]')?.value) || 0; 
+    const netWorth = savings + emergency + investments - debt;
+    const nwEl = document.getElementById('kpi-networth');
+    const nwStatusEl = document.getElementById('kpi-networth-status');
+    if (savingsVal === '' && emergencyVal === '' && debtVal === '') {
+        nwEl.innerText = '--';
+        nwEl.style.color = 'var(--text-secondary)';
+        nwStatusEl.innerHTML = '<span class="text-secondary">Dashed</span>';
+    } else {
+        nwEl.innerText = '₹' + Math.round(netWorth).toLocaleString('en-IN');
+        if (netWorth > 1000000) {
+            nwEl.style.color = 'var(--accent-green)';
+            nwStatusEl.innerHTML = '<span class="text-success">🟢 Wealthy</span>';
+        } else if (netWorth >= 0) {
+            nwEl.style.color = 'var(--accent-cyan)';
+            nwStatusEl.innerHTML = '<span class="text-cyan">🟢 Positive</span>';
+        } else {
+            nwEl.style.color = 'var(--accent-red)';
+            nwStatusEl.innerHTML = '<span class="text-danger">🚨 Negative</span>';
+        }
+    }
+
+    // 5. 50/30/20 Budget Splitter
+    const needsTarget = net * 0.5;
+    const wantsTarget = net * 0.3;
+    const savingsTarget = net * 0.2;
+
+    document.getElementById('budget-needs-val').innerText = '₹' + Math.round(needsTarget).toLocaleString('en-IN');
+    document.getElementById('budget-wants-val').innerText = '₹' + Math.round(wantsTarget).toLocaleString('en-IN');
+    document.getElementById('budget-savings-val').innerText = '₹' + Math.round(savingsTarget).toLocaleString('en-IN');
+
+    // Estimate progress bar sizes
+    const needsPct = Math.min(100, net > 0 ? (expenses / net) * 100 : 0);
+    const savingsPct = Math.min(100, net > 0 ? (Math.max(0, net - expenses) / net) * 100 : 0);
+    const wantsPct = Math.max(0, 100 - needsPct - savingsPct);
+
+    document.getElementById('budget-needs-bar').style.width = needsPct + '%';
+    document.getElementById('budget-wants-bar').style.width = wantsPct + '%';
+    document.getElementById('budget-savings-bar').style.width = savingsPct + '%';
+    
+    // Auto-propagate values to other form fields to sync them
+    syncAllFormFields(grossVal, netVal, savingsVal, emergencyVal, debtVal, expensesVal);
 }
 
-// Expense Prediction
+// Automatically sync quick profile inputs to other forms to save user typing!
+function syncAllFormFields(gross, net, savings, emergency, debt, expenses) {
+    document.querySelectorAll('[name="Gross monthly income"]').forEach(el => { if(!el.matches(':focus')) el.value = gross; });
+    document.querySelectorAll('[name="Net monthly income"]').forEach(el => { if(!el.matches(':focus')) el.value = net; });
+    document.querySelectorAll('[name="Savings"]').forEach(el => { if(!el.matches(':focus')) el.value = savings; });
+    document.querySelectorAll('[name="Emergency Fund"]').forEach(el => { if(!el.matches(':focus')) el.value = emergency; });
+    document.querySelectorAll('[name="Debt"]').forEach(el => { if(!el.matches(':focus')) el.value = debt; });
+    document.querySelectorAll('[name="Total Expenses"]').forEach(el => { if(!el.matches(':focus')) el.value = expenses; });
+}
+
+// Bind listener to profile input keyup/change
+profileInputs.forEach(input => {
+    input.addEventListener('input', updateOverviewMetrics);
+});
+updateOverviewMetrics(); // Initial load run
+
+
+
+// Form Input Synced validations (Net income <= Gross income)
+function setupValidation(inputClass, grossName, netName, warningId) {
+    const inputs = document.querySelectorAll('.' + inputClass);
+    inputs.forEach(el => {
+        el.addEventListener('input', () => {
+            const form = el.closest('form');
+            const grossInput = form.querySelector(`[name="${grossName}"]`);
+            const netInput = form.querySelector(`[name="${netName}"]`);
+            const warning = form.querySelector('#' + warningId);
+            if (grossInput && netInput && warning) {
+                const gross = parseFloat(grossInput.value) || 0;
+                const net = parseFloat(netInput.value) || 0;
+                warning.style.display = net > gross ? 'flex' : 'none';
+            }
+        });
+    });
+}
+setupValidation('exp-inp', 'Gross monthly income', 'Net monthly income', 'expense-income-warning');
+setupValidation('inv-inp', 'Gross monthly income', 'Net monthly income', 'invest-income-warning');
+
+// Setup validation for expenses exceeding income in investment form
+document.querySelectorAll('.inv-inp').forEach(el => {
+    el.addEventListener('input', () => {
+        const form = el.closest('form');
+        const grossInput = form.querySelector('[name="Gross monthly income"]');
+        const expenseInput = form.querySelector('[name="Total Expenses"]');
+        const warning = form.querySelector('#invest-expense-warning');
+        if(grossInput && expenseInput && warning) {
+            const gross = parseFloat(grossInput.value) || 0;
+            const exp = parseFloat(expenseInput.value) || 0;
+            warning.style.display = exp > gross ? 'flex' : 'none';
+        }
+    });
+});
+
+// Helper to serialize form data to feature list
+function formToFeatureArray(form, fields) {
+    const data = new FormData(form);
+    return [fields.map(f => {
+        const val = data.get(f);
+        return val === "" ? "" : Number(val);
+    })];
+}
+
+// Render Result Helper
+function displayResult(containerId, title, colorClass, data) {
+    const container = document.getElementById(containerId);
+    container.style.display = 'block';
+    
+    let adviceHtml = '';
+    if(data.advice && data.advice.length) {
+        adviceHtml = `<ul class="advice-list">`;
+        for(const line of data.advice) {
+            adviceHtml += `<li class="advice-item">
+                <span class="text-${colorClass}">✦</span>
+                <span>${line}</span>
+            </li>`;
+        }
+        adviceHtml += `</ul>`;
+    }
+
+    container.innerHTML = `
+        <div class="result-header bg-${colorClass} text-dark">
+            <span class="h6 mb-0 font-weight-bold">${title}</span>
+            <span class="badge bg-dark text-${colorClass}">${data.prediction ? data.prediction[0] : 'Report'}</span>
+        </div>
+        <div class="result-body">
+            ${adviceHtml}
+        </div>
+    `;
+}
+
+// 1. Expense Prediction Form Submission
 const expenseFields = ["Gross monthly income","Net monthly income","Savings","Investments","Debt","Emergency Fund"];
 document.getElementById('expense-form').onsubmit = async function(e) {
     e.preventDefault();
     const features = formToFeatureArray(this, expenseFields);
-    const res = await fetch('/predict/expense', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({features})
-    });
-    const data = await res.json();
-    if(res.ok) {
-        let html = `<div class='alert alert-primary'><b>Predicted Expense: ${data.prediction[0]}</b></div>`;
-        if(data.advice && data.advice.length) {
-            html += `<ul class='list-group mb-2'>`;
-            for(const line of data.advice) html += `<li class='list-group-item'>${line}</li>`;
-            html += `</ul>`;
+    const resultDiv = document.getElementById('expense-result');
+    
+    try {
+        const res = await fetch('/predict/expense', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({features})
+        });
+        const data = await res.json();
+        if(res.ok) {
+            displayResult('expense-result', 'Predicted Monthly Expense', 'primary', data);
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
         }
-        document.getElementById('expense-result').innerHTML = html;
-    } else {
-        document.getElementById('expense-result').innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
+    } catch(err) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `<div class='alert alert-danger'>Network Error: ${err.message}</div>`;
     }
 };
 
-// Investment Recommendation
+// 2. Investment Recommendation Form Submission
 const investmentFields = ["Gross monthly income","Net monthly income","Savings","Investments","Debt","Emergency Fund","Total Expenses"];
 document.getElementById('investment-form').onsubmit = async function(e) {
     e.preventDefault();
     const features = formToFeatureArray(this, investmentFields);
-    const res = await fetch('/predict/investment', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({features})
-    });
-    const data = await res.json();
-    if(res.ok) {
-        let html = `<div class='alert alert-success'><b>Investment Recommendation: ${data.prediction[0]}</b></div>`;
-        if(data.advice && data.advice.length) {
-            html += `<ul class='list-group mb-2'>`;
-            for(const line of data.advice) html += `<li class='list-group-item'>${line}</li>`;
-            html += `</ul>`;
+    const resultDiv = document.getElementById('investment-result');
+
+    try {
+        const res = await fetch('/predict/investment', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({features})
+        });
+        const data = await res.json();
+        if(res.ok) {
+            displayResult('investment-result', 'Asset Allocation Strategy', 'success', data);
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
         }
-        document.getElementById('investment-result').innerHTML = html;
-    } else {
-        document.getElementById('investment-result').innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
+    } catch(err) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `<div class='alert alert-danger'>Network Error: ${err.message}</div>`;
     }
 };
 
-// Insurance Gap Detection
+// 3. Insurance Gap Form Submission
 const insuranceFields = ["Age","Gross monthly income","Net monthly income","Savings","Debt","Emergency Fund","Investments","Insurance","Occupation","Lifestyle Score","Family History"];
 document.getElementById('insurance-form').onsubmit = async function(e) {
     e.preventDefault();
     const data = new FormData(this);
-    // Build features array in the order of insuranceFields
     const features = [insuranceFields.map(f => {
         let v = data.get(f);
         if(f === "Occupation" || f === "Family History") return v || "";
         if(f === "Lifestyle Score") return v ? Number(v) : 5;
-        return v ? Number(v) : 0;
+        return v === "" ? "" : Number(v);
     })];
-    const res = await fetch('/predict/insurance', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({features})
-    });
-    const result = await res.json();
-    if(res.ok) {
-        let html = `<div class='alert alert-warning'><b>Insurance Gap: ${result.prediction[0]}</b></div>`;
-        if(result.advice && result.advice.length) {
-            html += `<ul class='list-group mb-2'>`;
-            for(const line of result.advice) html += `<li class='list-group-item'>${line}</li>`;
-            html += `</ul>`;
+    const resultDiv = document.getElementById('insurance-result');
+
+    try {
+        const res = await fetch('/predict/insurance', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({features})
+        });
+        const result = await res.json();
+        if(res.ok) {
+            displayResult('insurance-result', 'Insurance Gap Report', 'warning', result);
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div class='alert alert-danger'>${result.error}</div>`;
         }
-        document.getElementById('insurance-result').innerHTML = html;
-    } else {
-        document.getElementById('insurance-result').innerHTML = `<div class='alert alert-danger'>${result.error}</div>`;
+    } catch(err) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `<div class='alert alert-danger'>Network Error: ${err.message}</div>`;
     }
 };
 
-// Financial Projection
-const projectionFields = ["Age","Gross monthly income","Total Expenses","Savings","Investments","Emergency Fund"];
+// Explicit order of columns for Wealth Projection table
+const columns = [
+    { key: "Year", label: "Year" },
+    { key: "Projected Annual Income (₹)", label: "Projected Income" },
+    { key: "Projected Annual Expenses (₹)", label: "Projected Expenses" },
+    { key: "Savings (₹)", label: "Liquid Savings Portfolio" },
+    { key: "Investments (₹)", label: "Investments Portfolio" },
+    { key: "Net Worth (₹)", label: "Total Net Worth" },
+    { key: "Event/Advice", label: "Financial Status" }
+];
+
+// 4. Financial Projection Form Submission
+const projectionFields = ["Age","Net monthly income","Total Expenses","Savings","Investments","Emergency Fund"];
 document.getElementById('projection-form').onsubmit = async function(e) {
     e.preventDefault();
     const features = formToFeatureArray(this, projectionFields);
-    const res = await fetch('/predict/projection', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({features})
-    });
-    const data = await res.json();
-    if(res.ok) {
-        // Table
-        let table = `<table class='table table-bordered'><thead><tr>`;
-        for(const col of Object.keys(data.table[0])) table += `<th>${col}</th>`;
-        table += `</tr></thead><tbody>`;
-        for(const row of data.table) {
-            table += `<tr>`;
-            for(const col of Object.keys(row)) table += `<td>${row[col]}</td>`;
-            table += `</tr>`;
-        }
-        table += `</tbody></table>`;
-        document.getElementById('projection-result').innerHTML = table;
-        // Chart
-        const ctx = document.getElementById('projection-chart').getContext('2d');
-        if(window.projectionChart) window.projectionChart.destroy();
-        window.projectionChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.table.map(r => r['Year']),
-                datasets: [
-                    {label: 'Projected Income', data: data.table.map(r => r['Projected Income (₹)']), borderColor: '#007bff', fill: false},
-                    {label: 'Projected Expenses', data: data.table.map(r => r['Projected Expenses (₹)']), borderColor: '#dc3545', fill: false},
-                    {label: 'Net Worth', data: data.table.map(r => r['Net Worth (₹)']), borderColor: '#28a745', fill: false}
-                ]
-            },
-            options: {responsive: true, plugins: {legend: {position: 'top'}}}
+    const resultDiv = document.getElementById('projection-result');
+    const chartWrap = document.getElementById('chart-wrap');
+
+    try {
+        const res = await fetch('/predict/projection', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({features})
         });
-    } else {
-        document.getElementById('projection-result').innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
-        if(window.projectionChart) window.projectionChart.destroy();
+        const data = await res.json();
+        if(res.ok) {
+            // Render Table with strict column order to prevent alphabetical layout bugs
+            let table = `<div class='table-responsive mt-3'><table class='table table-dark table-hover table-striped'><thead><tr>`;
+            for(const col of columns) {
+                table += `<th>${col.label}</th>`;
+            }
+            table += `</tr></thead><tbody>`;
+            for(const row of data.table) {
+                table += `<tr>`;
+                for(const col of columns) {
+                    const cellVal = row[col.key];
+                    if (col.key === 'Year') {
+                        table += `<td><strong>${cellVal}</strong></td>`;
+                    } else if (col.key === 'Event/Advice') {
+                        const isStable = cellVal.includes('✅') || cellVal === 'Stable';
+                        const badgeClass = isStable ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle';
+                        table += `<td><span class="badge ${badgeClass} px-2.5 py-1.5" style="font-size: 0.8rem;">${cellVal}</span></td>`;
+                    } else if (typeof cellVal === 'number') {
+                        table += `<td>₹${cellVal.toLocaleString('en-IN')}</td>`;
+                    } else {
+                        table += `<td>${cellVal}</td>`;
+                    }
+                }
+                table += `</tr>`;
+            }
+            table += `</tbody></table></div>`;
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = table;
+            
+            // Show Chart Wrapper
+            chartWrap.style.display = 'block';
+            
+            // Render Chart.js
+            const ctx = document.getElementById('projection-chart').getContext('2d');
+            if(window.projectionChart) window.projectionChart.destroy();
+            
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+            
+            window.projectionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.table.map(r => r['Year']),
+                    datasets: [
+                        {
+                            label: 'Annual Income', 
+                            data: data.table.map(r => r['Projected Annual Income (₹)']), 
+                            borderColor: '#3b82f6', 
+                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Annual Expenses', 
+                            data: data.table.map(r => r['Projected Annual Expenses (₹)']), 
+                            borderColor: '#ef4444', 
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Net Worth', 
+                            data: data.table.map(r => r['Net Worth (₹)']), 
+                            borderColor: '#10b981', 
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    family: 'Plus Jakarta Sans',
+                                    size: 11,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div class='alert alert-danger'>${data.error}</div>`;
+            chartWrap.style.display = 'none';
+        }
+    } catch(err) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `<div class='alert alert-danger'>Network Error: ${err.message}</div>`;
+        chartWrap.style.display = 'none';
     }
 };
 </script>

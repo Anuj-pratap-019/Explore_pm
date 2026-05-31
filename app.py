@@ -6,23 +6,16 @@ import traceback
 
 app = Flask(__name__)
 
-# Load the models
+# Load the expense model
+expense_model_path = 'expense_predictor_rf.pkl'
+if not os.path.exists(expense_model_path):
+    expense_model_path = os.path.join(os.path.dirname(__file__), 'models', 'expense_predictor_rf.pkl')
+
 try:
-    expense_model = joblib.load('expense_predictor_rf.pkl')
-    insurance_model = joblib.load('insurance_gap_model.pkl')
-    investment_model = joblib.load('investment_model.pkl')
-    insurance_label_encoder = joblib.load('models/insurance_gap_label_encoder.pkl') if os.path.exists('models/insurance_gap_label_encoder.pkl') else None
-except FileNotFoundError as e:
-    models_dir = os.path.join(os.path.dirname(__file__), 'models')
-    try:
-        expense_model = joblib.load(os.path.join(models_dir, 'expense_predictor_rf.pkl'))
-        insurance_model = joblib.load(os.path.join(models_dir, 'insurance_gap_model.pkl'))
-        investment_model = joblib.load(os.path.join(models_dir, 'investment_model.pkl'))
-        insurance_label_encoder = joblib.load(os.path.join(models_dir, 'insurance_gap_label_encoder.pkl')) if os.path.exists(os.path.join(models_dir, 'insurance_gap_label_encoder.pkl')) else None
-    except FileNotFoundError:
-        print(f"Error loading models: {e}")
-        expense_model, insurance_model, investment_model = None, None, None
-        insurance_label_encoder = None
+    expense_model = joblib.load(expense_model_path)
+except Exception as e:
+    print(f"Error loading expense model: {e}")
+    expense_model = None
 
 @app.route('/')
 def home():
@@ -37,7 +30,7 @@ def analyze_expense_profile(user_data):
     df = pd.DataFrame([user_data])
     X = df[input_features]
     predicted_expense = expense_model.predict(X)[0]
-    income = user_data["Gross monthly income"]
+    income = user_data["Net monthly income"]
     if predicted_expense > income:
         logical_expense = income
         overspending = True
@@ -59,7 +52,7 @@ def analyze_expense_profile(user_data):
         spending_flag = "🟡 Moderate spending level"
     advice = [
         f"📊 Predicted Monthly Expense: ₹{round(predicted_expense):,}",
-        f"🔷 Fixed Portion: ₹{round(fixed_expense):,}, 🔶 Variable Portion: ₹{round(variable_expense):,}",
+        f"🔷 Fixed Portion (60%): ₹{round(fixed_expense):,}, 🔶 Variable Portion (40%): ₹{round(variable_expense):,}",
         f"💸 Expected Future Liabilities: ₹{round(total_future_liabilities):,} (EMI + Medical + Tuition)",
         f"📉 Spending to Income Ratio: {spending_ratio:.2f}",
         f"📝 Spending Risk Flag: {spending_flag}"
@@ -71,69 +64,104 @@ def analyze_expense_profile(user_data):
     return round(predicted_expense), advice
 
 # --- Investment Advice Logic ---
-def recommend_investment_strategy(user_data, prediction):
-    income = user_data["Gross monthly income"]
-    savings = user_data["Savings"]
-    debt = user_data["Debt"]
-    emergency_fund = user_data["Emergency Fund"]
-    expenses = user_data["Total Expenses"]
+def recommend_investment_strategy(user_data):
+    income = float(user_data["Gross monthly income"])
+    savings = float(user_data["Savings"])
+    debt = float(user_data["Debt"])
+    emergency_fund = float(user_data["Emergency Fund"])
+    expenses = float(user_data["Total Expenses"])
+    occupation = user_data.get("Occupation", "").strip().lower()
+
     advice = []
-    if emergency_fund < expenses * 3:
-        advice.append(f"Your emergency fund is below the 3-month threshold. Aim for ₹{expenses*3:,.0f}.")
-    if savings < 100000:
-        advice.append("Your savings are on the lower side. Consider increasing them before aggressive investing.")
-    if prediction == "ELSS":
-        advice.append("ELSS is suitable for high-income individuals comfortable with long lock-in and equity risk.")
-    elif prediction == "SIP":
-        advice.append("SIP is a smart choice for steady long-term wealth building with moderate risk.")
-    elif prediction == "FD":
-        advice.append("FD is a safe option if you're risk-averse or need fixed returns.")
-    elif prediction == "PPF":
-        advice.append("PPF is good when emergency funds are low and you need tax-saving, long-term safety.")
-    elif prediction == "Mixed":
-        advice.append("A mixed strategy is ideal when no single option dominates — diversify across SIP, FD, and ELSS.")
-    return advice
+
+    # Check emergency fund first - standard financial rule (aim for 3-6 months of expenses)
+    emergency_target = expenses * 3
+    if emergency_fund < emergency_target:
+        recommendation = "Savings Account / Liquid Fund"
+        advice.append(f"🚨 Critical Priority: Build your emergency fund first. It is below the 3-month threshold of ₹{emergency_target:,.0f}.")
+        advice.append("💡 Avoid locking up your money in long-term plans (like PPF) until your liquid emergency reserves are secure.")
+        advice.append("📈 Keep your savings in a high-yield savings account or a liquid mutual fund for instant access.")
+    # Recommendation based on high savings and high income with low debt (Wealth building / Tax saving)
+    elif savings > 200000 and income > 80000 and debt < 50000:
+        recommendation = "ELSS (Equity Linked Savings Scheme)"
+        advice.append("✅ Recommendation: ELSS (Tax-saving mutual funds). Suitable for high-income earners with low debt who can digest equity market volatility.")
+        advice.append("💡 ELSS qualifies for Section 80C tax deductions and has the shortest lock-in (3 years) among all tax-saving options.")
+    # Moderate savings and low debt (Wealth building)
+    elif savings > 100000 and debt < 50000:
+        recommendation = "SIP (Systematic Investment Plan)"
+        advice.append("✅ Recommendation: Systematic Investment Plan (SIP) in equity/hybrid mutual funds.")
+        advice.append("💡 Consistent investing via SIPs helps in compounding wealth over the long term and averages out market fluctuations.")
+    # Lower income or specific occupations (Capital Preservation)
+    elif income < 40000 or occupation in ["student", "retired", "senior citizen"]:
+        recommendation = "Fixed Deposit (FD) / Debt Funds"
+        advice.append("✅ Recommendation: Fixed Deposits (FD) or conservative Debt Mutual Funds.")
+        advice.append("💡 Focus on capital preservation and safety. Perfect for lower-income brackets, students, or retired individuals needing steady/low-risk returns.")
+    # Fallback or mixed profile (Diversified Portfolio)
+    else:
+        recommendation = "Mixed Strategy (SIP + FD)"
+        advice.append("✅ Recommendation: A balanced portfolio split across equity SIPs and Fixed Income (FD/PPF).")
+        advice.append("💡 This provides a healthy mix of growth (equity) and stability (debt) to manage financial risk.")
+
+    # General advice rules
+    if debt > income * 2:
+        advice.append("⚠️ Debt Warning: Your total outstanding debt is quite high compared to your monthly income. Prioritize prepaying high-interest debt over aggressive investing.")
+    if savings > income * 6:
+        advice.append("ℹ️ Idle Cash: You have substantial cash in savings. Consider allocating some of it into investments to beat inflation.")
+
+    return recommendation, advice
 
 # --- Insurance Gap + Health Risk Advice Logic ---
-def predict_insurance_gap_with_health(user_data, pred_encoded):
-    age = user_data["Age"]
-    income = user_data["Gross monthly income"]
-    insurance = user_data.get("Insurance", 0)
+def predict_insurance_gap_with_health(user_data):
+    age = float(user_data["Age"])
+    income = float(user_data["Gross monthly income"])
+    insurance = float(user_data.get("Insurance", 0))
     occupation = user_data.get("Occupation", "").lower()
-    lifestyle = user_data.get("Lifestyle Score", 5)
+    lifestyle = int(user_data.get("Lifestyle Score", 5))
     family_history = user_data.get("Family History", "No").lower()
+
+    # Calculate Human Life Value (HLV)
     years_remaining = max(0, 60 - age)
     hlv = income * 12 * years_remaining * 0.5
-    if insurance_label_encoder:
-        gap_label = insurance_label_encoder.inverse_transform([pred_encoded])[0]
+
+    # Deterministic Insurance Gap label logic
+    if insurance < 0.7 * hlv:
+        gap_label = "Underinsured"
+    elif insurance > 1.2 * hlv:
+        gap_label = "Overinsured"
     else:
-        gap_label = str(pred_encoded)
+        gap_label = "Adequately Insured"
+
     # Health risk scoring
     risk_score = 0
     if age > 50: risk_score += 2
     if lifestyle <= 5: risk_score += 2
     if "yes" in family_history: risk_score += 3
-    if any(word in occupation for word in ["desk", "office", "it", "developer"]):
+    if any(word in occupation for word in ["desk", "office", "it", "developer", "software"]):
         risk_score += 1
+
     if risk_score <= 2:
         health_risk = "Low"
     elif risk_score <= 5:
         health_risk = "Medium"
     else:
         health_risk = "High"
-    advice = [f"Your estimated Human Life Value (HLV) is ₹{hlv:,.0f}."]
+
+    advice = [f"📊 Your estimated Human Life Value (HLV) is ₹{hlv:,.0f}."]
     if gap_label == "Underinsured":
-        advice.append(f"You're underinsured. You may need ₹{hlv - insurance:,.0f} more coverage.")
+        gap_amount = hlv - insurance
+        advice.append(f"🚨 You are Underinsured. Your current cover is ₹{insurance:,.0f}. You need an additional cover of at least ₹{gap_amount:,.0f} to protect your family's future.")
     elif gap_label == "Overinsured":
-        advice.append("You may be paying more than needed for life cover.")
+        advice.append(f"🟡 You are Overinsured (Current cover: ₹{insurance:,.0f} vs HLV: ₹{hlv:,.0f}). You may be paying higher premiums than necessary.")
     else:
-        advice.append("Your insurance appears adequate based on income and age.")
+        advice.append(f"✅ Your insurance coverage of ₹{insurance:,.0f} is adequate based on your income and age.")
+
     if health_risk == "High":
-        advice.append("You are at high health risk. Consider critical illness and health insurance urgently.")
+        advice.append("🚨 High Health Risk: Consider critical illness rider and comprehensive health insurance immediately.")
     elif health_risk == "Medium":
-        advice.append("You are at moderate health risk. A health plan with OPD coverage may be beneficial.")
+        advice.append("🟡 Moderate Health Risk: A family floater plan with wellness/OPD benefits is recommended.")
     else:
-        advice.append("Your health risk is low. Maintain a good lifestyle and consider wellness-based plans.")
+        advice.append("✅ Low Health Risk: Maintain your healthy lifestyle and consider a basic term health plan.")
+
     return gap_label, advice
 
 # --- Financial Projection Logic ---
@@ -141,28 +169,35 @@ def generate_janam_patri(user_data, years=[1, 3, 10]):
     income_growth = 0.08
     expense_growth = 0.06
     investment_return = 0.10
+    savings_interest_rate = 0.04
     emergency_buffer = 3
 
-    age = user_data["Age"]
-    income = user_data["Gross monthly income"]
-    expenses = user_data["Total Expenses"]
-    savings = user_data["Savings"]
-    investments = user_data["Investments"]
-    emergency_fund = user_data["Emergency Fund"]
+    age = float(user_data["Age"])
+    income = float(user_data["Net monthly income"])
+    expenses = float(user_data["Total Expenses"])
+    savings = float(user_data["Savings"])
+    investments = float(user_data["Investments"])
+    emergency_fund = float(user_data["Emergency Fund"])
 
     data = []
     for year in range(1, max(years) + 1):
         income *= (1 + income_growth)
         expenses *= (1 + expense_growth)
-        yearly_savings = income - expenses
+        
+        # Multiply monthly savings by 12 to get annual accumulation
+        yearly_savings = (income - expenses) * 12
 
         event = ""
         if yearly_savings < 0:
             event = "⚠️ Fund Shortage"
             yearly_savings = 0
 
-        savings += yearly_savings
-        investments *= (1 + investment_return)
+        # Reallocate 50% of yearly savings to investments, and 50% to cash savings
+        savings_addition = yearly_savings * 0.5
+        investment_addition = yearly_savings * 0.5
+
+        savings = (savings * (1 + savings_interest_rate)) + savings_addition
+        investments = (investments * (1 + investment_return)) + investment_addition
         net_worth = savings + investments + emergency_fund
 
         if emergency_fund < (expenses * emergency_buffer):
@@ -171,8 +206,8 @@ def generate_janam_patri(user_data, years=[1, 3, 10]):
         if year in years:
             data.append({
                 "Year": f"{year} year(s)",
-                "Projected Income (₹)": round(income),
-                "Projected Expenses (₹)": round(expenses),
+                "Projected Annual Income (₹)": round(income * 12),
+                "Projected Annual Expenses (₹)": round(expenses * 12),
                 "Savings (₹)": round(savings),
                 "Investments (₹)": round(investments),
                 "Net Worth (₹)": round(net_worth),
@@ -190,6 +225,9 @@ def predict_expense():
     try:
         values = data['features'][0]
         user_data = dict(zip(feature_names, values))
+        # Convert numeric fields
+        for k in feature_names:
+            user_data[k] = float(user_data[k]) if user_data[k] != '' else 0.0
         predicted_expense, advice = analyze_expense_profile(user_data)
         return jsonify({'prediction': [predicted_expense], 'advice': advice})
     except Exception as e:
@@ -198,16 +236,14 @@ def predict_expense():
 
 @app.route('/predict/investment', methods=['POST'])
 def predict_investment():
-    if not investment_model:
-        return jsonify({"error": "Investment model is not loaded"}), 500
     data = request.get_json()
     feature_names = ["Gross monthly income", "Net monthly income", "Savings", "Investments", "Debt", "Emergency Fund", "Total Expenses"]
     try:
         values = data['features'][0]
         user_data = dict(zip(feature_names, values))
-        df = pd.DataFrame([user_data])
-        prediction = investment_model.predict(df)[0]
-        advice = recommend_investment_strategy(user_data, prediction)
+        for k in feature_names:
+            user_data[k] = float(user_data[k]) if user_data[k] != '' else 0.0
+        prediction, advice = recommend_investment_strategy(user_data)
         return jsonify({'prediction': [prediction], 'advice': advice})
     except Exception as e:
         print(traceback.format_exc())
@@ -215,8 +251,6 @@ def predict_investment():
 
 @app.route('/predict/insurance', methods=['POST'])
 def predict_insurance():
-    if not insurance_model:
-        return jsonify({"error": "Insurance model is not loaded"}), 500
     data = request.get_json()
     feature_names = [
         "Age", "Gross monthly income", "Net monthly income", "Savings", "Debt", "Emergency Fund", "Investments",
@@ -225,20 +259,13 @@ def predict_insurance():
     try:
         values = data['features'][0]
         user_data = dict(zip(feature_names, values))
-        # Convert types for numeric fields
         for k in ["Age", "Gross monthly income", "Net monthly income", "Savings", "Debt", "Emergency Fund", "Investments", "Insurance"]:
-            user_data[k] = float(user_data[k]) if user_data[k] != '' else 0
-        if "Lifestyle Score" in user_data:
-            user_data["Lifestyle Score"] = int(user_data["Lifestyle Score"]) if user_data["Lifestyle Score"] != '' else 5
-        else:
-            user_data["Lifestyle Score"] = 5
-        # For model prediction, only use the original 7 features
-        model_features = [
-            "Age", "Gross monthly income", "Net monthly income", "Savings", "Debt", "Emergency Fund", "Investments"
-        ]
-        df = pd.DataFrame([{k: user_data[k] for k in model_features}])
-        pred_encoded = insurance_model.predict(df)[0]
-        gap_label, advice = predict_insurance_gap_with_health(user_data, pred_encoded)
+            user_data[k] = float(user_data[k]) if user_data[k] != '' else 0.0
+        user_data["Lifestyle Score"] = int(user_data["Lifestyle Score"]) if user_data["Lifestyle Score"] != '' else 5
+        user_data["Occupation"] = user_data.get("Occupation") or ""
+        user_data["Family History"] = user_data.get("Family History") or "No"
+
+        gap_label, advice = predict_insurance_gap_with_health(user_data)
         return jsonify({'prediction': [gap_label], 'advice': advice})
     except Exception as e:
         print(traceback.format_exc())
@@ -247,13 +274,12 @@ def predict_insurance():
 @app.route('/predict/projection', methods=['POST'])
 def predict_projection():
     data = request.get_json()
-    feature_names = ["Age", "Gross monthly income", "Total Expenses", "Savings", "Investments", "Emergency Fund"]
+    feature_names = ["Age", "Net monthly income", "Total Expenses", "Savings", "Investments", "Emergency Fund"]
     try:
         values = data['features'][0]
         user_data = dict(zip(feature_names, values))
-        # Convert all to float
         for k in feature_names:
-            user_data[k] = float(user_data[k]) if user_data[k] != '' else 0
+            user_data[k] = float(user_data[k]) if user_data[k] != '' else 0.0
         df = generate_janam_patri(user_data)
         data_table = df.to_dict(orient='records')
         return jsonify({'table': data_table})
